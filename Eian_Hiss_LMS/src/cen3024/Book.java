@@ -1,22 +1,35 @@
 /*
- * Eian Hiss - CEN3024C - Jan 26, 2024
+ * Eian Hiss - CEN3024C - MAR 1, 2024
  * Class - Book
  * Individual records of books in the library.
  * Contains an ID number, the title, and the author of the book.
+ * New additions: Checkout status and due date.
  */
 
 package cen3024;
+import java.util.*;
 
 public class Book {
 	
 	private int idNum;
 	private String title;
 	private String author;
+	private String genre;
+	private boolean checkedOut = false;
+	private GregorianCalendar dueDate = null;
+	private static GregorianCalendar today = new GregorianCalendar();
 	
-	public Book(int id, String ttl, String aut) {		
+	public Book(int id, String ttl, String aut, String g) {		
 		idNum = id;
 		title = ttl;
-		author = aut;		
+		author = aut;
+		genre = g;
+	}
+	
+	public Book(int id, String ttl, String aut, String g, boolean ck, int y, int m, int d) {
+		this(id, ttl, aut, g);
+		checkedOut = ck;
+		dueDate = new GregorianCalendar(y, m-1, d);
 	}
 	
 	/*
@@ -25,7 +38,12 @@ public class Book {
 	 * No arguments - returns a String containing the attributes of a Book.
 	 */	
 	public String toString() {	
-		return idNum + "," + title + "," + author;		
+		if (checkedOut)
+			return getID() + "," + getTitle() + "," + getAuthor() + "," +
+				getGenre() + "," + Boolean.toString(checkedOut) + "," + getDueDate();		
+		else
+			return getID() + "," + getTitle() + "," + getAuthor() + "," +
+				getGenre() + "," + Boolean.toString(checkedOut) + ",,,";
 	}
 	
 	public int getID(){
@@ -39,4 +57,44 @@ public class Book {
 	public String getAuthor() {
 		return author;
 	}
+	
+	public String getGenre() {
+		return genre;
+	}
+
+	public boolean getCheckedStatus() {
+		return checkedOut;
+	}
+	
+	public String getDueDate() {
+		if (checkedOut) {
+			String dateString = Integer.toString(dueDate.get(GregorianCalendar.YEAR)) + "," +
+					Integer.toString(dueDate.get(GregorianCalendar.MONTH) + 1) + "," +
+					Integer.toString(dueDate.get(GregorianCalendar.DATE));
+			return dateString;
+		}
+		else
+			return "Not Checked Out";
+	}
+	
+	public void toggleCheck() {
+		if (checkedOut) {
+			checkedOut = false;
+			clearDue();
+		}
+		else {
+			checkedOut = true;
+			assignDue();
+		}
+	}
+	
+	public void clearDue() {
+		dueDate = null;
+	}
+	
+	public void assignDue() {
+		dueDate = (GregorianCalendar) today.clone();
+		dueDate.add(GregorianCalendar.DATE, 28);
+	}
+	
 }

@@ -1,5 +1,5 @@
 /*
- * Eian Hiss - CEN3024C - Jan 26, 2024
+ * Eian Hiss - CEN3024C - MAR 1, 2024
  * Class - Library
  * Text interface for program with user and file i/o.
  * Build and manage the records of the library's collection.
@@ -13,11 +13,11 @@ import java.util.*;
 
 public class Library {
 
-	public static void main(String[] args) {
-		/*
-		 * Method: main
-		 * Menu interface and program control.
-		 */
+	/*
+	 * Method: main
+	 * Menu interface and program control.
+	 */
+	/* public static void main(String[] args) {
 		ArrayList<Book> collection = new ArrayList<Book>();
 		boolean shutdown = false;
 		int option = 0;
@@ -105,14 +105,14 @@ public class Library {
 				entry.nextLine();
 			}
 		}			
-	}
+	} */
 	
 	/*
 	 * Method - enterRecord
 	 * Arguments - Target list and input scanner
 	 * Manually enter records for testing purposes
 	 */
-	private static void enterRecord(ArrayList<Book> list, Scanner sc){
+	public static void enterRecord(ArrayList<Book> list, Scanner sc){
 		System.out.print("Enter book ID: ");
 		if (!sc.hasNextInt()) {
 			System.out.println("Invalid ID. Restarting.");
@@ -125,8 +125,10 @@ public class Library {
 			String ttl = sc.nextLine();
 			System.out.print("Enter book author: ");
 			String aut = sc.nextLine();
+			System.out.print("Enter book genre: ");
+			String g = sc.nextLine();
 			
-			addRecord(list, id, ttl, aut);
+			addRecord(list, id, ttl, aut, g);
 		}
 	}
 	
@@ -135,7 +137,7 @@ public class Library {
 	 * Enters records into the collection from a text file.
 	 * Arguments - filename string and collection list
 	 */	
-	private static void importRecords (String file, ArrayList<Book> collection) {
+	public static void importRecords (String file, ArrayList<Book> collection) {
 		Path textFile = Paths.get(file + ".txt");
 		String line = "";
 		String[] tokens;
@@ -144,12 +146,25 @@ public class Library {
 			while (readFile.hasNextLine()) {
 				line = readFile.nextLine();
 				tokens = line.split(",");
-				try {
-					addRecord(collection, Integer.parseInt(tokens[0]), tokens[1], tokens[2]);
+				if (!Boolean.parseBoolean(tokens[4])) {
+					try {
+						addRecord(collection, Integer.parseInt(tokens[0]), tokens[1], tokens[2], tokens[3]);
+					}
+					catch (NumberFormatException nfe) {
+						System.out.println("Invalid record format - Check data in file.");
+						nfe.printStackTrace();
+					}
 				}
-				catch (NumberFormatException nfe) {
-					System.out.println("Invalid record format - Check data in file.");
-					nfe.printStackTrace();
+				else {
+					try {
+						addRecord(collection, Integer.parseInt(tokens[0]), tokens[1], tokens[2], tokens[3],
+								Boolean.parseBoolean(tokens[4]), Integer.parseInt(tokens[5]), 
+								Integer.parseInt(tokens[6]), Integer.parseInt(tokens[7]));
+					}
+					catch (NumberFormatException nfe) {
+						System.out.println("Invalid record format - Check data in file.");
+						nfe.printStackTrace();
+					}
 				}
 			}
 			readFile.close();
@@ -163,10 +178,17 @@ public class Library {
 	/*
 	 * Method - addRecord
 	 * Creates new Book records in the collection
-	 * Arguments - collection list, ID number, title and author of the book.
+	 * Arguments - collection list, ID number, title, author and genre of the book.
 	 */
-	private static void addRecord(ArrayList<Book> collection, int id, String ttl, String aut) {
-		collection.add(new Book(id, ttl, aut));
+	private static void addRecord(ArrayList<Book> collection, int id, String ttl, String aut, String g) {
+		collection.add(new Book(id, ttl, aut, g));
+		System.out.println("Record added.");
+	}
+	
+	
+	private static void addRecord(ArrayList<Book> collection, int id, String ttl, String aut, String g,
+			boolean chk, int y,	int m, int d) {
+		collection.add(new Book(id, ttl, aut, g, chk, y, m, d));
 		System.out.println("Record added.");
 		System.out.println();
 	}
@@ -174,38 +196,20 @@ public class Library {
 	/*
 	 * Method - removeRecord
 	 * Removes a record from the collection
-	 * Arguments - collection list and ID number of book to be removed.
+	 * Arguments - collection list and index number of book to be removed.
 	 */
-	private static void removeRecord(ArrayList<Book> collection, int id) {
-		boolean found = false;
-		for (int x = 0; x < collection.size(); x++) {
-			if (collection.get(x).getID() == id) {
-				collection.remove(x);
-				System.out.println("Record removed.");
-				found = true;
-			}
-		}
-		if (!found)
-			System.out.println("Record not found.");
-		System.out.println();
+	public static void removeRecord(ArrayList<Book> collection, int index) {
+		collection.remove(index);
+		System.out.println("Record removed.");
 	}
 	
 	/*
-	 * Method - displayRecordByID
+	 * Method - displayRecord
 	 * Finds a record by ID number and displays it
 	 * Arguments - collection list and ID number
 	 */
-	private static void displayRecordByID(ArrayList<Book> collection, int id) {
-		boolean found = false;
-		for (int x = 0; x < collection.size(); x++) {
-			if (collection.get(x).getID() == id) {
-				System.out.println(collection.get(x));
-				found = true;
-			}
-		}
-		if (!found)
-			System.out.println("Record not found.");
-		System.out.println();
+	public static void displayRecord(Book record) {
+		System.out.println(record);
 	}
 	
 	/*
@@ -213,7 +217,7 @@ public class Library {
 	 * Lists every record in the collection
 	 * Arguments - collection list
 	 */
-	private static void displayCollection(ArrayList<Book> collection) {
+	public static void displayCollection(ArrayList<Book> collection) {
 		for (int x = 0; x < collection.size(); x++) {
 			System.out.println(collection.get(x));
 		}
@@ -225,7 +229,7 @@ public class Library {
 	 * Exports every record in the collection to a file.
 	 * Arguments - file name and collection list
 	 */
-	private static void exportCollection(String file, ArrayList<Book> collection) {
+	public static void exportCollection(String file, ArrayList<Book> collection) {
 		try (PrintWriter toWrite = new PrintWriter(Files.newOutputStream(Paths.get(file + ".txt")))) {
 			for (int x = 0; x < collection.size(); x++) {
 				toWrite.println(collection.get(x));
@@ -240,40 +244,108 @@ public class Library {
 		}
 	
 	/*
-	 * Method - displayRecordByTitle
-	 * Finds records by title and displays them
-	 * Arguments - string to find in title and collection list
+	 * Method - searchByID
+	 * Finds records by ID
+	 * Arguments - ID number and collection list
 	 */
-	private static void displayRecordByTitle(ArrayList<Book> collection, String title) {
-		boolean found = false;
+	
+	public static Book searchByID(ArrayList<Book> collection, int id) {
 		for (int x = 0; x < collection.size(); x++) {
-			if (collection.get(x).getTitle().contains(title)) {
-				System.out.println(collection.get(x));
-				found = true;
+			if (collection.get(x).getID() == id) {
+				//displayRecord(collection.get(x));
+				return collection.get(x);
 			}
 		}
-		if (!found)
-			System.out.println("No relevant records found.");
+		System.out.println("No relevant records found.");
 		System.out.println();
+		return null;		
 	}
 	
 	/*
-	 * Method - displayRecordByAuthor
+	 * Method - indexByID
+	 * Finds records with inventory ID - returns collection index
+	 * Arguments - inventory ID and collection list
+	 */
+	
+	public static int indexByID(ArrayList<Book> collection, int id) {
+		for (int x = 0; x < collection.size(); x++) {
+			if (collection.get(x).getID() == id) {
+				//displayRecord(collection.get(x));
+				return x;
+			}
+		}
+		System.out.println("No relevant records found.");
+		System.out.println();
+		return -1;		
+	}
+	
+	/*
+	 * Method - searchByTitle
+	 * Finds records by title
+	 * Arguments - string to find in title and collection list
+	 */
+	public static Book searchByTitle(ArrayList<Book> collection, String title) {
+		for (int x = 0; x < collection.size(); x++) {
+			if (collection.get(x).getTitle().contains(title)) {
+				//displayRecord(collection.get(x));
+				return collection.get(x);
+			}
+		}
+		System.out.println("No relevant records found.");
+		System.out.println();
+		return null;		
+	}
+	
+	/*
+	 * Method - indexByTitle
+	 * Finds records by title and returns collection index
+	 * Arguments - string to find in title and collection list
+	 */
+	public static int indexByTitle(ArrayList<Book> collection, String title) {
+		for (int x = 0; x < collection.size(); x++) {
+			if (collection.get(x).getTitle().contains(title)) {
+				//displayRecord(collection.get(x));
+				return x;
+			}
+		}
+		System.out.println("No relevant records found.");
+		System.out.println();
+		return -1;		
+	}
+		
+	/*
+	 * Method - searchByAuthor
 	 * Finds records by author and displays them
 	 * Arguments - string to find in author's name and collection list
 	 */
-	private static void displayRecordByAuthor(ArrayList<Book> collection, String author) {
-		boolean found = false;
+	public static Book searchByAuthor(ArrayList<Book> collection, String author) {
 		for (int x = 0; x < collection.size(); x++) {
 			if (collection.get(x).getAuthor().contains(author)) {
-				System.out.println(collection.get(x));
-				found = true;
+				//displayRecord(collection.get(x));
+				return collection.get(x);
 			}
 		}
-		if (!found)
-			System.out.println("No relevant records found.");
+		System.out.println("No relevant records found.");
 		System.out.println();
+		return null;		
 	}
 	
+	/*
+	 * Method - searchByAuthor
+	 * Finds records by author and displays them
+	 * Arguments - string to find in author's name and collection list
+	 */
+	
+	public static int indexByAuthor(ArrayList<Book> collection, String author) {
+		for (int x = 0; x < collection.size(); x++) {
+			if (collection.get(x).getAuthor().contains(author)) {
+				//displayRecord(collection.get(x));
+				return x;
+			}
+		}
+		System.out.println("No relevant records found.");
+		System.out.println();
+		return -1;
+	}
 	
 }
