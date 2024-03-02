@@ -1,0 +1,6 @@
+1,Storm Front,Jim Butcher,Fantasy,false
+2,Making Money,Terry Pratchett,Fantasy,false
+3,The Hitchhiker's Guide to the Galaxy,Douglas Adams,Science Fiction,false
+4,Artemis Fowl,Eoin Colfer,Fantasy,false
+5,Left Behind,Tim LaHaye,Religious Fiction,false
+6,The Two Towers,J.R.R. Tolkien,Fiction,false
