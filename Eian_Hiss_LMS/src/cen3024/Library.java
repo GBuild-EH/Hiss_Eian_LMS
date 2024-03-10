@@ -14,100 +14,6 @@ import java.util.*;
 public class Library {
 
 	/*
-	 * Method: main
-	 * Menu interface and program control.
-	 */
-	/* public static void main(String[] args) {
-		ArrayList<Book> collection = new ArrayList<Book>();
-		boolean shutdown = false;
-		int option = 0;
-		int id = 0;
-		String file = "";
-		Scanner entry = new Scanner(System.in);
-		while (!shutdown)
-		{
-			System.out.println("Library Management System");
-			System.out.println("1: Add Records");
-			System.out.println("2: Remove book");
-			System.out.println("3: Display record");
-			System.out.println("4: Display all records");
-			System.out.println("5: Export collection");
-			System.out.println("6: Exit");
-			System.out.println("7: Search by title");
-			System.out.println("8: Search by author");
-			System.out.print("Select option: ");
-			if (entry.hasNextInt()) {
-				option = entry.nextInt();
-				System.out.println();
-				switch (option) {
-				case 1:
-					System.out.print("Import from file? (Y/N)");
-					String answer = entry.next();
-					entry.nextLine();
-					if (answer.equalsIgnoreCase("y")) {
-						System.out.print("Enter file name: ");
-						file = entry.next();
-						entry.nextLine();
-						importRecords(file, collection);
-					}
-					else if (answer.equalsIgnoreCase("n")) 
-						enterRecord(collection, entry);
-					else
-						System.out.println("Invalid selection. Try again.\n");
-					break;
-				case 2:
-					System.out.print("Enter ID of book to remove: ");
-					id = entry.nextInt();
-					System.out.println();
-					removeRecord(collection, id);
-					break;
-				case 3:
-					System.out.print("Enter ID of book to display: ");
-					id = entry.nextInt();
-					System.out.println();
-					displayRecordByID(collection, id);
-					break;
-				case 4:
-					displayCollection(collection);
-					break;
-				case 5:
-					System.out.print("Enter file name: ");
-					file = entry.next();
-					entry.nextLine();
-					exportCollection(file, collection);
-					break;
-				case 6:
-					shutdown = true;
-					entry.close();
-					break;
-				case 7:
-					System.out.print("Enter book title to search: ");
-					String title = entry.next();
-					entry.nextLine();
-					System.out.println();
-					displayRecordByTitle(collection, title);
-					break;
-				case 8:
-					System.out.print("Enter author to search: ");
-					String author = entry.next();
-					entry.nextLine();
-					System.out.println();
-					displayRecordByAuthor(collection, author);
-					break;
-				default:
-					System.out.println("Invalid option. Try again.");
-					System.out.println();
-				}
-			}
-			else {
-				System.out.println("Invalid option. Try again");
-				System.out.println();
-				entry.nextLine();
-			}
-		}			
-	} */
-	
-	/*
 	 * Method - enterRecord
 	 * Arguments - Target list and input scanner
 	 * Manually enter records for testing purposes
@@ -180,13 +86,13 @@ public class Library {
 	 * Creates new Book records in the collection
 	 * Arguments - collection list, ID number, title, author and genre of the book.
 	 */
-	private static void addRecord(ArrayList<Book> collection, int id, String ttl, String aut, String g) {
+	public static void addRecord(ArrayList<Book> collection, int id, String ttl, String aut, String g) {
 		collection.add(new Book(id, ttl, aut, g));
 		System.out.println("Record added.");
 	}
 	
 	
-	private static void addRecord(ArrayList<Book> collection, int id, String ttl, String aut, String g,
+	public static void addRecord(ArrayList<Book> collection, int id, String ttl, String aut, String g,
 			boolean chk, int y,	int m, int d) {
 		collection.add(new Book(id, ttl, aut, g, chk, y, m, d));
 		System.out.println("Record added.");
@@ -201,6 +107,46 @@ public class Library {
 	public static void removeRecord(ArrayList<Book> collection, int index) {
 		collection.remove(index);
 		System.out.println("Record removed.");
+	}
+	
+	/* 
+	 * Method - removeById
+	 * Removes a record from the collection after searching by ID
+	 * Arguments - collection list and inventory ID of book to be removed.
+	 */
+	
+	public static void removeByID(ArrayList<Book> collection, int id) {
+		int index = Library.indexByID(collection, id);
+		if (index != -1)
+			Library.removeRecord(collection, index);
+	}
+	
+	/* 
+	 * Method - removeByTitle
+	 * Removes a record from the collection after searching by title.
+	 * Arguments - collection list and title of book to be removed.
+	 */
+	
+	public static void removeByTitle(ArrayList<Book> collection, Scanner entry, String title) {
+		List<Integer> results = new ArrayList<Integer>();
+		results = Library.indexByTitle(collection, title);
+		if (results.isEmpty())
+			System.out.println();
+		else if (results.size() == 1)
+			Library.removeRecord(collection, results.get(0));
+		else {
+			System.out.println("Multiple records found.");
+			for (int x = 0; x < results.size(); x++)
+				Library.displayRecord(collection.get(results.get(x)));
+			System.out.print("Enter ID of book to remove: ");
+			int id = entry.nextInt();
+			System.out.println();
+			 int index = Library.indexByID(collection, id);
+			if (index != -1)
+				Library.removeRecord(collection, index);
+			else
+				System.out.println();
+		}
 	}
 	
 	/*
@@ -222,6 +168,39 @@ public class Library {
 			System.out.println(collection.get(x));
 		}
 		System.out.println();
+	}
+	
+	/*
+	 * Method - checkOut
+	 * Sets a book as checked out and assigns a due date.
+	 * Arguments - Book record
+	 */
+	public static void checkOut(Book book) {
+		if (book != null) { //run once record is selected.
+			if (!book.getCheckedStatus()) {
+				book.toggleCheck();
+				System.out.println(book.getTitle() + " is now checked out.\n"
+						+ "It is due back on " + book.getDateString().replace(',', '-'));
+			}
+			else
+				System.out.println(book.getTitle() + " is already checked out.");
+		}
+	}
+	
+	/*
+	 * Method - checkIn
+	 * Sets a book as checked in and unassigns due date.
+	 * Arguments - Book record
+	 */
+	public static void checkIn(Book book) {
+		if (book != null) {
+			if (!book.getCheckedStatus())
+				System.out.println(book.getTitle() + " is already checked in.");
+			else {
+				book.toggleCheck();
+				System.out.println(book.getTitle() + " is now checked in.");
+			}
+		}
 	}
 	
 	/*
@@ -301,16 +280,20 @@ public class Library {
 	 * Finds records by title and returns collection index
 	 * Arguments - string to find in title and collection list
 	 */
-	public static int indexByTitle(ArrayList<Book> collection, String title) {
+	public static List<Integer> indexByTitle(ArrayList<Book> collection, String title) {
+		List<Integer> found = new ArrayList<Integer>();
 		for (int x = 0; x < collection.size(); x++) {
 			if (collection.get(x).getTitle().contains(title)) {
-				//displayRecord(collection.get(x));
-				return x;
-			}
+				found.add(x);
+			}	
 		}
-		System.out.println("No relevant records found.");
-		System.out.println();
-		return -1;		
+		if (found.size() == 0) {
+			System.out.println("No relevant records found.");
+			System.out.println();
+			return found;	
+		}
+		else
+			return found;
 	}
 		
 	/*
@@ -336,16 +319,20 @@ public class Library {
 	 * Arguments - string to find in author's name and collection list
 	 */
 	
-	public static int indexByAuthor(ArrayList<Book> collection, String author) {
+	public static List<Integer> indexByAuthor(ArrayList<Book> collection, String author) {
+		List<Integer> found = new ArrayList<Integer>();
 		for (int x = 0; x < collection.size(); x++) {
-			if (collection.get(x).getAuthor().contains(author)) {
-				//displayRecord(collection.get(x));
-				return x;
-			}
+			if (collection.get(x).getTitle().contains(author)) {
+				found.add(x);
+			}	
 		}
-		System.out.println("No relevant records found.");
-		System.out.println();
-		return -1;
+		if (found.size() == 0) {
+			System.out.println("No relevant records found.");
+			System.out.println();
+			return found;	
+		}
+		else
+			return found;
 	}
 	
 }

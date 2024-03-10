@@ -12,13 +12,14 @@ public class Interface {
 
 	public static void main(String[] args) {
 			ArrayList<Book> collection = new ArrayList<Book>();
+			List<Integer> results = new ArrayList<Integer>();
 			boolean shutdown = false;
 			int option = 0;
 			int id = 0;
 			int index = 0;
 			String file = "";
 			String title = "";
-			Book record = null;
+			Book book = null;
 			Scanner entry = new Scanner(System.in);
 			
 			System.out.println("Library Management System online.");
@@ -57,9 +58,7 @@ public class Interface {
 						System.out.print("Enter ID of book to remove: ");
 						id = entry.nextInt();
 						System.out.println();
-						index = Library.indexByID(collection, id);
-						if (index != -1)
-							Library.removeRecord(collection, index);
+						Library.removeByID(collection, id);
 						System.out.println();
 						Library.displayCollection(collection);
 						System.out.println();
@@ -69,10 +68,9 @@ public class Interface {
 						title = entry.next();
 						entry.nextLine();
 						System.out.println();
-						index = Library.indexByTitle(collection, title);
-						if (index != -1)
-							Library.removeRecord(collection, index);
+						Library.removeByTitle(collection, entry, title);
 						System.out.println();
+						results.clear();
 						Library.displayCollection(collection);
 						System.out.println();
 						break;
@@ -81,15 +79,28 @@ public class Interface {
 						title = entry.next();
 						entry.nextLine();
 						System.out.println();
-						record = Library.searchByTitle(collection, title);
-						if (!record.getCheckedStatus()) {
-							record.toggleCheck();
-							System.out.println(record.getTitle() + " is now checked out.\n"
-									+ "It is due back on " + record.getDueDate().replace(',', '-'));
+						results = Library.indexByTitle(collection, title);
+						if (results.isEmpty()) //Nothing found.
+							System.out.println();
+						else if (results.size() == 1) //Single record found.
+							book = collection.get(results.get(0));
+						else {
+							System.out.println("Multiple records found."); //Multiple records found.
+							for (int x = 0; x < results.size(); x++)
+								Library.displayRecord(collection.get(results.get(x)));
+							System.out.print("Enter ID of book to check out: ");
+							id = entry.nextInt();
+							System.out.println();
+							index = Library.indexByID(collection, id);
+							if (index != -1)
+								book = collection.get(index);
+							else
+								System.out.println();
 						}
-						else
-							System.out.println(record.getTitle() + " is already checked out.");
+						Library.checkOut(book);
 						System.out.println();
+						results.clear();
+						book = null;
 						Library.displayCollection(collection);
 						System.out.println();
 						break;
@@ -98,14 +109,28 @@ public class Interface {
 						title = entry.next();
 						entry.nextLine();
 						System.out.println();
-						record = Library.searchByTitle(collection, title);
-						if (!record.getCheckedStatus())
-							System.out.println(record.getTitle() + " is already checked in.");
+						results = Library.indexByTitle(collection, title);
+						if (results.isEmpty())
+							System.out.println();
+						else if (results.size() == 1)
+							book = collection.get(results.get(0));
 						else {
-							record.toggleCheck();
-							System.out.println(record.getTitle() + "is now checked in.");
+							System.out.println("Multiple records found.");
+							for (int x = 0; x < results.size(); x++)
+								Library.displayRecord(collection.get(results.get(x)));
+							System.out.print("Enter ID of book to check in: ");
+							id = entry.nextInt();
+							System.out.println();
+							index = Library.indexByID(collection, id);
+							if (index != -1)
+								book = collection.get(index);
+							else
+								System.out.println();
 						}
+						Library.checkIn(book);
 						System.out.println();
+						results.clear();
+						book = null;
 						Library.displayCollection(collection);
 						System.out.println();
 						break;

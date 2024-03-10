@@ -40,7 +40,7 @@ public class Book {
 	public String toString() {	
 		if (checkedOut)
 			return getID() + "," + getTitle() + "," + getAuthor() + "," +
-				getGenre() + "," + Boolean.toString(checkedOut) + "," + getDueDate();		
+				getGenre() + "," + Boolean.toString(checkedOut) + "," + getDateString();		
 		else
 			return getID() + "," + getTitle() + "," + getAuthor() + "," +
 				getGenre() + "," + Boolean.toString(checkedOut) + ",,,";
@@ -66,7 +66,7 @@ public class Book {
 		return checkedOut;
 	}
 	
-	public String getDueDate() {
+	public String getDateString() {
 		if (checkedOut) {
 			String dateString = Integer.toString(dueDate.get(GregorianCalendar.YEAR)) + "," +
 					Integer.toString(dueDate.get(GregorianCalendar.MONTH) + 1) + "," +
@@ -75,6 +75,10 @@ public class Book {
 		}
 		else
 			return "Not Checked Out";
+	}
+	
+	public GregorianCalendar getDueDate() {
+		return dueDate;
 	}
 	
 	public void toggleCheck() {
