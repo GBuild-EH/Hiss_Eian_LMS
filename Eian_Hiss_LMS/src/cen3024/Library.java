@@ -43,11 +43,10 @@ public class Library {
 	 * Enters records into the collection from a text file.
 	 * Arguments - filename string and collection list
 	 */	
-	public static void importRecords (String file, ArrayList<Book> collection) {
+	public static void importRecords (String file, ArrayList<Book> collection) throws IOException {
 		Path textFile = Paths.get(file + ".txt");
 		String line = "";
 		String[] tokens;
-		try {
 			Scanner readFile = new Scanner(textFile);
 			while (readFile.hasNextLine()) {
 				line = readFile.nextLine();
@@ -64,8 +63,8 @@ public class Library {
 				else {
 					try {
 						addRecord(collection, Integer.parseInt(tokens[0]), tokens[1], tokens[2], tokens[3],
-								Boolean.parseBoolean(tokens[4]), Integer.parseInt(tokens[5]), 
-								Integer.parseInt(tokens[6]), Integer.parseInt(tokens[7]));
+								Boolean.parseBoolean(tokens[4]), Integer.parseInt(tokens[5].split("/")[0]), 
+								Integer.parseInt(tokens[5].split("/")[1]), Integer.parseInt(tokens[5].split("/")[2]));
 					}
 					catch (NumberFormatException nfe) {
 						System.out.println("Invalid record format - Check data in file.");
@@ -73,12 +72,7 @@ public class Library {
 					}
 				}
 			}
-			readFile.close();
-		}
-		catch (IOException ioe) {
-			System.out.println("File not found - check file name and location");
-			ioe.printStackTrace();
-		}		
+			readFile.close();		
 	}
 	
 	/*
