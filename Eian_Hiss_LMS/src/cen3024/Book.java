@@ -68,8 +68,8 @@ public class Book {
 	
 	public String getDateString() {
 		if (checkedOut) {
-			String dateString = Integer.toString(dueDate.get(GregorianCalendar.YEAR)) + "," +
-					Integer.toString(dueDate.get(GregorianCalendar.MONTH) + 1) + "," +
+			String dateString = Integer.toString(dueDate.get(GregorianCalendar.YEAR)) + "/" +
+					Integer.toString(dueDate.get(GregorianCalendar.MONTH) + 1) + "/" +
 					Integer.toString(dueDate.get(GregorianCalendar.DATE));
 			return dateString;
 		}
