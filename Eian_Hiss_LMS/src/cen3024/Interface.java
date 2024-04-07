@@ -27,7 +27,12 @@ public class Interface {
 			System.out.print("Enter file name: ");
 			file = entry.next();
 			entry.nextLine();
-			Library.importRecords(file, collection);
+			try {
+				Library.importRecords(file, collection);
+			}
+			catch (Exception ioe) {
+				ioe.printStackTrace();
+			}
 			
 			System.out.println();
 			Library.displayCollection(collection);

@@ -1,6 +1,14 @@
+/*
+ * Eian Hiss - CEN3024C - APR 7, 2024
+ * Class - GInterface
+ * Graphical interface for program with user I/O.
+ * Created via Eclipse WindowBuilder.
+ */
+
 package cen3024;
 
 import java.util.*;
+import java.sql.*;
 import java.awt.EventQueue;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
@@ -14,10 +22,7 @@ import java.awt.event.ActionEvent;
 public class GInterface {
 
 	private JFrame frmLibraryManagement;
-	private JTable tbCollection;
-	static ArrayList<Book> collection = new ArrayList<Book>();
-	private List<Integer> indices = new ArrayList<Integer>();
-	private int ID, index = 0;
+	private int ID;
 	private String title = "";
 	
 
@@ -28,16 +33,12 @@ public class GInterface {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {
-					String path = JOptionPane.showInputDialog("Please enter collection file name");
-					if (path.length() > 0) {
-						Library.importRecords(path, collection);
-						GInterface window = new GInterface();
-						window.frmLibraryManagement.setVisible(true);
-					}
-					else
-						JOptionPane.showMessageDialog(null, "Please enter a file name.");
+					DBLibrary.connect();
+					GInterface window = new GInterface();
+					window.frmLibraryManagement.setVisible(true);
 				} catch (Exception e) {
-					JOptionPane.showMessageDialog(null, "File not found.");
+					JOptionPane.showMessageDialog(null, "Database not found.");
+					e.printStackTrace();
 				}
 			}
 		});
@@ -57,7 +58,7 @@ public class GInterface {
 		frmLibraryManagement = new JFrame();
 		frmLibraryManagement.setResizable(false);
 		frmLibraryManagement.setTitle("Library Management - EH");
-		frmLibraryManagement.setBounds(100, 100, 700, 600);
+		frmLibraryManagement.setBounds(100, 100, 700, 560);
 		frmLibraryManagement.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frmLibraryManagement.getContentPane().setLayout(null);
 		
@@ -65,150 +66,168 @@ public class GInterface {
 		sPane.setBounds(12, 12, 676, 471);
 		frmLibraryManagement.getContentPane().add(sPane);
 		
-		tbCollection = new JTable();
+		JTable tbCollection = new JTable();
 		sPane.setViewportView(tbCollection);
 		DefaultTableModel model = new DefaultTableModel();
 		Object[] column = {	"ID", "Title", "Author", "Genre", "Checked Out", "Due Date"};
-		Object[] row = new Object[6];
+		ArrayList<Object> row = new ArrayList<Object>();
 		model.setColumnIdentifiers(column);
-		for (int i = 0; i < collection.size(); i++) {
-			row = collection.get(i).toString().split(",");
-			model.addRow(row);
+		try { // Populating the table
+			ResultSet query = DBLibrary.refresh(); // Retrieve information from Database
+			ResultSetMetaData queryMeta = query.getMetaData();
+			while(query.next()) {
+				for (int col = 1; col <= queryMeta.getColumnCount(); col++) {
+					row.add(query.getObject(col)); // Build record
+				}
+				model.addRow(row.toArray()); // Add record to table
+				row.clear(); // Clear list for next record
+			}
+			query.close();
+			tbCollection.setModel(model); 
+		} catch (SQLException sqle) {
+			JOptionPane.showMessageDialog(null, sqle.getMessage());
 		}
-		tbCollection.setModel(model);
 		
-		JButton btnRemID = new JButton("Remove ID");
+		JButton btnRemID = new JButton("Remove ID"); // Removing books by ID
 		btnRemID.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
+				try {
 				ID = Integer.parseInt(JOptionPane.showInputDialog("Enter ID of book to remove."));
-				index = Library.indexByID(collection, ID);
-				if (index != -1)
-					Library.removeRecord(collection, index);
+				ResultSet query = DBLibrary.checkID(ID);
+				if (query.next()) {
+					DBLibrary.removeID(ID); // Remove Book after confirming it exists
+				}
 				else
 					JOptionPane.showMessageDialog(null, "Book not found.");
-				while (model.getRowCount() > 0) // This refreshes the table.
+				query.close();
+				while (model.getRowCount() > 0) // This updates the table.
 					model.removeRow(0);
-				for (int x = 0; x < collection.size(); x++) {
-					Object[] row = collection.get(x).toString().split(",");
-					model.addRow(row);
+				query = DBLibrary.refresh();
+				ResultSetMetaData queryMeta = query.getMetaData();
+				while(query.next()) {
+					for (int col = 1; col <= queryMeta.getColumnCount(); col++) {
+						row.add(query.getObject(col));
+					}
+					model.addRow(row.toArray());
+					row.clear();
+				}
+				query.close();
+				} catch (SQLException sqle) {
+					JOptionPane.showMessageDialog(null, sqle.getMessage());
 				}
 			}
 		});
 		btnRemID.setBounds(22, 495, 117, 25);
 		frmLibraryManagement.getContentPane().add(btnRemID);
 		
-		JButton btnRemoveTitle = new JButton("Remove Title");
+		JButton btnRemoveTitle = new JButton("Remove Title"); // Removing books by Title
 		btnRemoveTitle.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				title = JOptionPane.showInputDialog("Enter title of book to remove.");
-				indices = Library.indexByTitle(collection, title);
-				if (indices.isEmpty())
-					JOptionPane.showMessageDialog(null, "Title not found.");
-				else if (indices.size() == 1)
-					Library.removeRecord(collection, indices.get(0));
-				else {
-					String message = "Multiple records found. Enter ID of book to remove.\n";
-					for (int x = 0; x < indices.size(); x++) {
-						message += (collection.get(indices.get(x)).toString() + "\n");
+					try {
+					title = JOptionPane.showInputDialog("Enter title of book to remove.");
+					ResultSet query = DBLibrary.checkTitle(title);
+					if (query.next()) {
+						DBLibrary.removeTitle(title); // Remove Book after confirming it exists
 					}
-					ID = Integer.parseInt(JOptionPane.showInputDialog(message));
-					index = Library.indexByID(collection, ID);
-					if (index != -1)
-						Library.removeRecord(collection, index);
 					else
-						JOptionPane.showMessageDialog(null, "Book not found.");					
-				}
-				while (model.getRowCount() > 0) // This refreshes the table.
-					model.removeRow(0);
-				for (int x = 0; x < collection.size(); x++) {
-					Object[] row = collection.get(x).toString().split(",");
-					model.addRow(row);
+						JOptionPane.showMessageDialog(null, "Book not found.");
+					query.close();
+					while (model.getRowCount() > 0) // This updates the table.
+						model.removeRow(0);
+					
+						query = DBLibrary.refresh();
+						ResultSetMetaData queryMeta = query.getMetaData();
+						while(query.next()) {
+							for (int col = 1; col <= queryMeta.getColumnCount(); col++) {
+								row.add(query.getObject(col));
+							}
+							model.addRow(row.toArray());
+							row.clear();
+						}
+						query.close();
+				} catch (SQLException sqle) {
+					JOptionPane.showMessageDialog(null, sqle.getMessage());
 				}
 			}
 		});
 		btnRemoveTitle.setBounds(151, 495, 135, 25);
 		frmLibraryManagement.getContentPane().add(btnRemoveTitle);
 		
-		JButton btnCheckOut = new JButton("Check Out");
+		JButton btnCheckOut = new JButton("Check Out"); // Checking books out
 		btnCheckOut.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				title = JOptionPane.showInputDialog("Enter title of book to check out.");
-				indices = Library.indexByTitle(collection, title);
-				if (indices.isEmpty())
-					JOptionPane.showMessageDialog(null, "Title not found.");
-				else if (indices.size() == 1)
-					if (!collection.get(indices.get(0)).getCheckedStatus())
-						Library.checkOut(collection.get(indices.get(0)));
-					else
-						JOptionPane.showMessageDialog(null, "Book already checked out.");
-				else {
-					String message = "Multiple records found. Enter ID of book to check out.\n";
-					for (int x = 0; x < indices.size(); x++) {
-						message += (collection.get(indices.get(x)).toString() + "\n");
-					}
-					ID = Integer.parseInt(JOptionPane.showInputDialog(message));
-					index = Library.indexByID(collection, ID);
-					if (index != -1)
-						if(!collection.get(index).getCheckedStatus())	
-							Library.checkOut(collection.get(index));
+				try {
+					title = JOptionPane.showInputDialog("Enter title of book to check out.");
+					ResultSet query = DBLibrary.checkTitle(title);
+					if (query.next())  // Check if book exists
+						if (query.getBoolean("Status")) // Check if book is checked out
+							JOptionPane.showMessageDialog(null, "Book already checked out");
 						else
-							JOptionPane.showMessageDialog(null, "Book already checked out.");
+							DBLibrary.checkOut(title);
 					else
-						JOptionPane.showMessageDialog(null, "Book not found.");
-				}
-				while (model.getRowCount() > 0) // This refreshes the table.
-					model.removeRow(0);
-				for (int x = 0; x < collection.size(); x++) {
-					Object[] row = collection.get(x).toString().split(",");
-					model.addRow(row);
+						JOptionPane.showMessageDialog(null, "Book Not Found");
+					query.close();
+					while (model.getRowCount() > 0) // This updates the table.
+						model.removeRow(0);
+					query = DBLibrary.refresh();
+					ResultSetMetaData queryMeta = query.getMetaData();
+					while(query.next()) {
+						for (int col = 1; col <= queryMeta.getColumnCount(); col++) {
+							row.add(query.getObject(col));
+						}
+						model.addRow(row.toArray());
+						row.clear();
+					}
+					query.close();
+				} catch (SQLException sqle) {
+					JOptionPane.showMessageDialog(null, sqle.getMessage());
 				}
 			}
 		});
 		btnCheckOut.setBounds(298, 495, 117, 25);
 		frmLibraryManagement.getContentPane().add(btnCheckOut);
 		
-		JButton btnCheckIn = new JButton("Check In");
+		JButton btnCheckIn = new JButton("Check In"); // Checking books in
 		btnCheckIn.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				title = JOptionPane.showInputDialog("Enter title of book to check in.");
-				indices = Library.indexByTitle(collection, title);
-				if (indices.isEmpty())
-					JOptionPane.showMessageDialog(null, "Title not found.");
-				else if (indices.size() == 1)
-					if (collection.get(indices.get(0)).getCheckedStatus())
-						Library.checkIn(collection.get(indices.get(0)));
+				try {
+					title = JOptionPane.showInputDialog("Enter title of book to check in.");
+					ResultSet query = DBLibrary.checkTitle(title);
+					if (query.next())  // Check if book exists
+						DBLibrary.checkIn(title);
 					else
-						JOptionPane.showMessageDialog(null, "Book already checked in.");
-				else {
-					String message = "Multiple records found. Enter ID of book to check in.\n";
-					for (int x = 0; x < indices.size(); x++) {
-						message += (collection.get(indices.get(x)).toString() + "\n");
+						JOptionPane.showMessageDialog(null, "Book Not Found");
+					query.close();
+					while (model.getRowCount() > 0) // This updates the table.
+						model.removeRow(0);
+					query = DBLibrary.refresh();
+					ResultSetMetaData queryMeta = query.getMetaData();
+					while(query.next()) {
+						for (int col = 1; col <= queryMeta.getColumnCount(); col++) {
+							row.add(query.getObject(col));
+						}
+						model.addRow(row.toArray());
+						row.clear();
 					}
-					ID = Integer.parseInt(JOptionPane.showInputDialog(message));
-					index = Library.indexByID(collection, ID);
-					if (index != -1)
-						if(collection.get(index).getCheckedStatus())	
-							Library.checkOut(collection.get(index));
-						else
-							JOptionPane.showMessageDialog(null, "Book already checked in.");
-					else
-						JOptionPane.showMessageDialog(null, "Book not found.");
-				}
-				while (model.getRowCount() > 0) // This refreshes the table.
-					model.removeRow(0);
-				for (int x = 0; x < collection.size(); x++) {
-					Object[] row = collection.get(x).toString().split(",");
-					model.addRow(row);
+					query.close();
+				} catch (SQLException sqle) {
+					JOptionPane.showMessageDialog(null, sqle.getMessage());
 				}
 			}
 		});
 		btnCheckIn.setBounds(427, 495, 117, 25);
 		frmLibraryManagement.getContentPane().add(btnCheckIn);
 		
-		JButton btnExit = new JButton("Exit");
+		JButton btnExit = new JButton("Exit"); // Exit the program
 		btnExit.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				System.exit(0);
+				try {
+					DBLibrary.close(); //close database connection
+				} catch (SQLException sqle) {
+					sqle.printStackTrace();
+				} finally {			
+					System.exit(0);
+				}
 			}
 		});
 		btnExit.setBounds(556, 495, 117, 25);
