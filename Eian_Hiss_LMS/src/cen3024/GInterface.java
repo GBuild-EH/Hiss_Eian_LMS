@@ -1,4 +1,4 @@
-/*
+/**
  * Eian Hiss - CEN3024C - APR 7, 2024
  * Class - GInterface
  * Graphical interface for program with user I/O.
@@ -19,6 +19,9 @@ import javax.swing.JButton;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 
+/**
+ * Graphical interface for Library Management System
+ */
 public class GInterface {
 
 	private JFrame frmLibraryManagement;
@@ -28,6 +31,7 @@ public class GInterface {
 
 	/**
 	 * Launch the application.
+	 * @param args Arguments passed from the system
 	 */
 	public static void main(String[] args) {
 		EventQueue.invokeLater(new Runnable() {
